@@ -1,0 +1,437 @@
+/* Restablecer estilos básicos */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Usar una fuente similar a la de Windows */
+}
+
+body {
+    background-color: #f5f5f5; /* Fondo claro */
+    color: #333;
+}
+
+/* Contenedor Principal de la App */
+.app-container {
+    display: flex;
+    flex-direction: column; /* Cambiado a columna */
+    height: 100vh;
+    max-width: 1400px; /* Limitar el ancho si es necesario */
+    margin: 0 auto;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* -------------------- Barra Superior (antes Sidebar) -------------------- */
+.top-bar {
+    width: 100%;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 60px;
+}
+
+.sidebar-header h2 {
+    font-size: 20px;
+    color: #333;
+}
+
+.list-nav ul {
+    list-style: none;
+    padding: 10px 0;
+}
+
+.list-nav ul {
+    display: flex; /* Mostrar elementos en fila */
+}
+
+.list-nav li a {
+    font-size: 14px;
+    color: #444;
+}
+
+.list-nav li a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 10px 15px;
+}
+
+.user-greeting {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #555;
+    font-weight: 600;
+}
+
+.list-nav .active {
+    background-color: #e0e0e0;
+    font-weight: 600;
+    color: #000;
+}
+
+.list-nav .separator {
+    height: 1px;
+    background-color: #eee;
+    margin: 10px 20px;
+    padding: 0;
+}
+
+/* -------------------- Contenido Principal -------------------- */
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    /* Fondo oscuro y texto blanco */
+    background-color: #121212; /* Un negro no tan puro, se ve mejor */
+    color: #ffffff;
+}
+
+.main-header h1 {
+    font-size: 30px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.main-header p {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Sección de entrada de Tareas */
+.task-input-section {
+    margin-top: 30px;
+    flex-grow: 1; /* Permite que esta sección ocupe el espacio principal */
+}
+
+.task-input {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff; /* Fondo blanco */
+    border-radius: 4px;
+    padding: 10px 15px;
+    width: 100%;
+    max-width: 600px; /* Limitar el ancho para un mejor diseño central */
+    margin: 0 auto;
+    border: 1px solid #ddd; /* Borde sutil */
+}
+
+.task-input i {
+    font-size: 20px;
+    margin-right: 15px;
+}
+
+.task-input input {
+    border: none;
+    background: none;
+    color: #000000; /* Texto negro */
+    font-size: 16px;
+    flex-grow: 1;
+    outline: none;
+    padding: 5px 0;
+}
+
+.task-input input::placeholder {
+    color: #333333; /* Placeholder negro/gris oscuro */
+}
+
+/* Barra inferior */
+.bottom-bar {
+    text-align: center;
+    padding: 15px 0;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* -------------------- Lista de Tareas -------------------- */
+.task-list {
+    list-style: none;
+    margin-top: 20px;
+    padding: 0;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.task-list li {
+    background-color: rgba(255, 255, 255, 0.08);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 17px;
+    border-left: 3px solid #0078d4;
+}
+
+.task-name {
+    font-weight: 600;
+}
+
+.important-star {
+    color: #f39c12; /* Color dorado para la estrella */
+    margin-left: 8px;
+    font-size: 16px;
+}
+
+.task-details {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+.task-list li.task-overdue {
+    border-left-color: #e74c3c; /* Rojo para vencidas */
+    background-color: rgba(231, 76, 60, 0.1); /* Fondo rojo claro */
+}
+
+.task-status-label {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 8px;
+    margin-bottom: 3px;
+}
+
+.overdue-label {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+
+/* -------------------- Modal de Detalles de Tarea -------------------- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #2c2c2c;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    color: #fff;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+}
+
+.modal-field {
+    margin-bottom: 20px;
+}
+
+.modal-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.modal-field input, .modal-field textarea, .date-picker-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #fff;
+    font-size: 16px;
+}
+
+.modal-field textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-primary {
+    background-color: #0078d4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.important-toggle-btn {
+    background: none;
+    border: 1px solid #666;
+    color: #ccc;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.important-toggle-btn.active {
+    background-color: #f39c12;
+    color: #fff;
+    border-color: #f39c12;
+}
+
+.button-secondary {
+    background-color: #555;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* -------------------- Página de Login -------------------- */
+.login-page-content {
+    justify-content: center;
+    align-items: center;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.login-container h2 {
+    margin-bottom: 25px;
+}
+
+.login-form .form-field {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.login-form .form-field label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.login-form .form-field input {
+    width: 100%;
+    padding: 12px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+}
+
+.view-toggle {
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.view-toggle button {
+    background: none;
+    border: none;
+    color: #0078d4;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 5px;
+}
+
+/* -------------------- Página de Grabar Pantalla -------------------- */
+.recorder-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.recorder-actions .record-btn {
+    padding: 15px 30px;
+    font-size: 18px;
+}
+
+.video-preview-container {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 30px;
+    background-color: #252526;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.video-preview-container h3 {
+    margin-bottom: 15px;
+}
+
+.video-preview-container h2 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.recordings-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.recording-item {
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 15px 20px;
+    display: flex; /* Alinear elementos en una fila */
+    justify-content: space-between; /* Espaciarlos */
+    align-items: center;
+    gap: 15px;
+}
+
+.recording-info {
+    display: flex;
+    flex-direction: column; /* Apilar nombre y fecha */
+}
+
+.recording-name {
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.edit-name-input {
+    font-size: 18px;
+    font-weight: 600;
+    background-color: #444;
+    border: 1px solid #666;
+    color: #fff;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.recording-details {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.recording-actions {
+    display: flex;
+    gap: 10px;
+}
