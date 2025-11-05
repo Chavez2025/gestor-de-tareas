@@ -1,49 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { FontAwesomeIcon, } from '@fortawesome/react-fontawesome';
-import { faBell, faEnvelope, faMobileAlt, faClock } from '@fortawesome/free-solid-svg-icons';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { faBell, faEnvelope, faMobileAlt, faClock, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TaskDetailsModal from './TaskDetailsModal';
 import LoginPage from './LoginPage';
-import { Contact } from './ContactsModal';
 import ContactsPage from './ContactsPage';
 import ScreenRecorderPage from './ScreenRecorderPage';
 import './styles.css';
+import DatePicker from 'react-datepicker'; // Importar DatePicker
+import "react-datepicker/dist/react-datepicker.css"; // Importar estilos de DatePicker
+import { useAppStore } from './store'; // Importar el store
 
 interface Task {
   id: number;
   name: string;
   date: Date | null;
   description: string;
+  tags?: string[];
   isImportant: boolean;
   isCompleted: boolean;
   reminderType?: 'email' | 'alarm' | 'whatsapp' | null;
   reminderRecipient?: string | null;
 }
 
-interface User {
-  password: string;
-  email: string;
-}
-
-// --- Funciones para manejar el almacenamiento de usuarios por usuario ---
-const getUsers = (): { [key: string]: User } => {
-  const storedUsers = localStorage.getItem('task-manager-users');
-  return storedUsers ? JSON.parse(storedUsers) : {};
-};
-
-const saveUsers = (users: { [key: string]: User }) => {
-  localStorage.setItem('task-manager-users', JSON.stringify(users));
-};
-
 // Componente de marcador de posición para el contenido principal
 const PlaceholderContent: React.FC<{ 
   title: string; 
-  allTasks: Task[]; 
-  onSaveTask: (details: any) => void;
-  onUpdateTask: (updatedTask: Task) => void;
-}> = ({ title, allTasks, onSaveTask, onUpdateTask }) => {
+}> = ({ title }) => {
+  // Obtenemos el estado y las acciones directamente del store
+  const allTasks = useAppStore((state) => state.tasks);
+  const onSaveTask = useAppStore((state) => state.addTask);
+  const onUpdateTask = useAppStore((state) => state.updateTask);
+  const getUsers = useAppStore((state) => state.getUsers);
+
   const [inputValue, setInputValue] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskNameToSave, setTaskNameToSave] = useState('');
@@ -53,6 +44,7 @@ const PlaceholderContent: React.FC<{
   const [openReminderMenuId, setOpenReminderMenuId] = useState<number | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [editingDateTaskId, setEditingDateTaskId] = useState<number | null>(null); // Nuevo estado para la edición de fecha
 
   // Primero, filtramos entre activas y archivadas
   const filteredByCompletion = allTasks.filter(task => showArchived ? task.isCompleted : !task.isCompleted);
@@ -117,6 +109,21 @@ const PlaceholderContent: React.FC<{
     if (taskToUpdate) {
       const updatedTask = { ...taskToUpdate, isCompleted: !taskToUpdate.isCompleted };
       onUpdateTask(updatedTask);
+    }
+  };
+
+  // Función para iniciar la edición de fecha/hora
+  const handleEditDateClick = (taskId: number) => {
+    setEditingDateTaskId(taskId);
+  };
+
+  // Función para manejar el cambio de fecha/hora
+  const handleDateChange = (taskId: number, newDate: Date | null) => {
+    const taskToUpdate = allTasks.find(t => t.id === taskId);
+    if (taskToUpdate) {
+      const updatedTask = { ...taskToUpdate, date: newDate };
+      onUpdateTask(updatedTask);
+      setEditingDateTaskId(null); // Cerrar el DatePicker después de seleccionar
     }
   };
 
@@ -194,7 +201,40 @@ const PlaceholderContent: React.FC<{
               <div className="task-content">
                 <div className="task-name">{task.name}</div>
                 {isOverdue && <div className="task-status-label overdue-label">Vencida</div>}
-                {task.date && <div className="task-details">Vence: {task.date.toLocaleString()}</div>}
+                {task.date && (
+              <div className="task-details date-display-container">
+                {editingDateTaskId === task.id ? (
+                  // Si estamos editando, mostrar el DatePicker
+                  <div onClick={(e) => e.stopPropagation()}> {/* Evitar que el clic en el DatePicker cierre la edición */}
+                <DatePicker
+                  selected={task.date}
+                  onChange={(d: Date | null) => handleDateChange(task.id, d)}
+                  showTimeSelect
+                  dateFormat="dd/MM/yyyy h:mm aa"
+                  isClearable
+                  className="task-date-editor-input"
+                  onCalendarClose={() => setEditingDateTaskId(null)} // Cerrar edición al cerrar el calendario
+                  onClickOutside={() => setEditingDateTaskId(null)} // Cerrar edición al hacer clic fuera
+                />
+              </div>
+                ) : (
+                  // Si no estamos editando, mostrar la fecha y el botón de edición
+                  <>
+                    Vence: {task.date.toLocaleString()}
+                    <button
+                      className="edit-date-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditDateClick(task.id);
+                      }}
+                      title="Editar fecha y hora"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
                 {expandedTaskId === task.id && task.description && (
                   <div className="task-details task-description">{task.description}</div>
                 )}
@@ -254,123 +294,28 @@ const PlaceholderContent: React.FC<{
   );
 };
 
-// --- Funciones para manejar el almacenamiento de tareas por usuario ---
-const getTasksForUser = (username: string): Task[] => {
-  if (!username) return [];
-  const storedTasks = localStorage.getItem(`tasks-for-user-${username}`);
-  if (storedTasks) {
-    // Es importante convertir las fechas de string a objeto Date
-    const parsedTasks = JSON.parse(storedTasks);
-    return parsedTasks.map((task: any) => ({
-      ...task,
-      date: task.date ? new Date(task.date) : null,
-    }));
-  }
-  return [];
-};
-
-const saveTasksForUser = (username: string, tasks: Task[]) => {
-  if (!username) return;
-  localStorage.setItem(`tasks-for-user-${username}`, JSON.stringify(tasks));
-};
-
-// --- Funciones para manejar el almacenamiento de contactos por usuario ---
-const getContactsForUser = (username: string): Contact[] => {
-  if (!username) return [];
-  const storedContacts = localStorage.getItem(`contacts-for-user-${username}`);
-  return storedContacts ? JSON.parse(storedContacts) : [];
-};
-
-const saveContactsForUser = (username: string, contacts: Contact[]) => {
-  if (!username) return;
-  localStorage.setItem(`contacts-for-user-${username}`, JSON.stringify(contacts));
-};
-
 const App = () => {
-  // Lee del localStorage para ver si ya hay una sesión activa
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<Task[]>(() => currentUser ? getTasksForUser(currentUser) : []);
-  const [contacts, setContacts] = useState<Contact[]>(() => currentUser ? getContactsForUser(currentUser) : []);
-
+  // Obtenemos el estado y la acción para cargar datos iniciales del store
+  const currentUser = useAppStore((state) => state.currentUser);
+  const fetchInitialData = useAppStore((state) => state.fetchInitialData);
   const isAuthenticated = !!currentUser;
 
-  // Cargar y guardar tareas cuando el usuario o las tareas cambien
+  // Al cargar la app, intentamos recuperar la sesión del localStorage
   useEffect(() => {
-    setContacts(currentUser ? getContactsForUser(currentUser) : []);
-  }, [currentUser]);
-
-  const handleAddContact = (contactDetails: Omit<Contact, 'id'>) => {
-    const newContact: Contact = {
-      id: Date.now(),
-      ...contactDetails,
-    };
-    const updatedContacts = [...contacts, newContact];
-    setContacts(updatedContacts);
-    if (currentUser) {
-      saveContactsForUser(currentUser, updatedContacts);
-    }
-  };
-
-  const handleDeleteContact = (contactId: number) => {
-    const updatedContacts = contacts.filter(c => c.id !== contactId);
-    setContacts(updatedContacts);
-    if (currentUser) {
-      saveContactsForUser(currentUser, updatedContacts);
-    }
-  };
-
-  const handleSaveTask = (taskDetails: { name: string; date: Date | null; description: string; isImportant: boolean; tags: string[] }) => {
-    const newTask: Task = {
-      id: Date.now(),
-      ...taskDetails,
-      // Limpiar y filtrar tags vacíos
-      tags: taskDetails.tags.map(t => t.trim()).filter(t => t),
-      isCompleted: false, // Las nuevas tareas no están completadas por defecto
-    };
-    const updatedTasks = [...tasks, newTask];
-    setTasks(updatedTasks);
-    if (currentUser) {
-      saveTasksForUser(currentUser, updatedTasks);
-    }
-  };
-
-  const handleUpdateTask = (updatedTask: Task) => {
-    const updatedTasks = tasks.map(task => 
-      task.id === updatedTask.id ? {
-        ...updatedTask,
-        tags: updatedTask.tags?.map(t => t.trim()).filter(t => t) || []
-      } : task
-    );
-    setTasks(updatedTasks);
-    if (currentUser) {
-      saveTasksForUser(currentUser, updatedTasks);
-    }
-  };
-
-  const handleLogin = (username: string) => {
-    // Guardar el usuario actual en localStorage y en el estado
-    localStorage.setItem('currentUser', username);
-    setCurrentUser(username);
-    // Cargar las tareas para el usuario que acaba de iniciar sesión
-    setTasks(getTasksForUser(username));
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    setCurrentUser(null);
-  };
+    fetchInitialData();
+  }, []); // El array vacío asegura que solo se ejecute una vez
 
   return (
     <BrowserRouter>
       <div className="app-container">
-        <Sidebar isAuthenticated={isAuthenticated} username={currentUser} onLogout={handleLogout} />
+        <Sidebar />
         <Routes>
           {isAuthenticated ? (
             <>
-              <Route path="/hoy" element={<PlaceholderContent title="Comienza a organizarte..." allTasks={tasks} onSaveTask={handleSaveTask} onUpdateTask={handleUpdateTask} />} />
-              <Route path="/important" element={<PlaceholderContent title="Importante" allTasks={tasks} onSaveTask={handleSaveTask} onUpdateTask={handleUpdateTask} />} />
-              <Route path="/contacts" element={<ContactsPage contacts={contacts} onAddContact={handleAddContact} onDeleteContact={handleDeleteContact} />} />
-              <Route path="/tasks" element={<PlaceholderContent title="Tareas por vencer" allTasks={tasks} onSaveTask={handleSaveTask} onUpdateTask={handleUpdateTask} />} />
+              <Route path="/hoy" element={<PlaceholderContent title="Comienza a organizarte..." />} />
+              <Route path="/important" element={<PlaceholderContent title="Importante" />} />
+              <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/tasks" element={<PlaceholderContent title="Tareas por vencer" />} />
               <Route path="/screen-recorder" element={<ScreenRecorderPage />} />
               {/* Si un usuario autenticado va a /login, lo redirigimos */}
               <Route path="/login" element={<Navigate to="/hoy" replace />} />
@@ -379,7 +324,7 @@ const App = () => {
             </>
           ) : (
             <>
-              <Route path="/login" element={<LoginPage onLogin={handleLogin} getUsers={getUsers} saveUsers={saveUsers} />} />
+              <Route path="/login" element={<LoginPage />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </>
           )}

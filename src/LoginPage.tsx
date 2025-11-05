@@ -1,18 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppStore, getUsers, saveUsers } from './store';
 
-interface User {
-  password: string;
-  email: string;
-}
-
-interface LoginPageProps {
-  onLogin: (username: string) => void;
-  getUsers: () => { [key: string]: User };
-  saveUsers: (users: { [key: string]: User }) => void;
-}
-
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, getUsers, saveUsers }) => {
+const LoginPage: React.FC = () => {
+  // Obtenemos la acción de login del store
+  const onLogin = useAppStore((state) => state.login);
+  
   const [isLoginView, setIsLoginView] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -55,8 +48,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, getUsers, saveUsers }) =
       // Guardar el nuevo usuario
       const updatedUsers = { ...users, [username]: { password, email } };
       saveUsers(updatedUsers);
-      alert(`¡Usuario "${username}" creado con éxito! Ahora puede iniciar sesión.`);
-      setIsLoginView(true); // Cambiar a la vista de login
+      alert(`¡Usuario "${username}" creado con éxito!`);
+      onLogin(username); // Iniciar sesión automáticamente
+      navigate('/hoy'); // Redirigir a la página principal
     }
   };
 
@@ -110,7 +104,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, getUsers, saveUsers }) =
               />
             </div>
           )}
-          <button type="submit" className="button-primary">
+          <button type="submit" className="bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">
             {isLoginView ? 'Ingresar' : 'Crear Usuario'}
           </button>
         </form>
