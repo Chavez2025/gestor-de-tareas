@@ -49,9 +49,6 @@ const PlaceholderContent: React.FC<{
   // Primero, filtramos entre activas y archivadas
   const filteredByCompletion = allTasks.filter(task => showArchived ? task.isCompleted : !task.isCompleted);
 
-  // Filtra las tareas según la vista actual (esta lógica se moverá o adaptará)
-  const displayedTasks = filteredByCompletion;
-
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && inputValue.trim() !== '') {
       setTaskNameToSave(inputValue);
@@ -154,7 +151,7 @@ const PlaceholderContent: React.FC<{
         </button>
       </div>
       <ul className="task-list">
-        {displayedTasks.map(task => {
+        {filteredByCompletion.map(task => {
           const isOverdue = task.date && task.date < new Date();
           return (
             <li 

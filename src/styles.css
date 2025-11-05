@@ -74,34 +74,10 @@ body {
     gap: 4px; /* Espacio entre el icono y el texto */
 }
 
-.user-greeting {
-    /* Estilos para centrar el saludo y hacerlo más grande */
-    flex-grow: 1;
-    text-align: center;
-    font-size: 22px; /* Más grande */
-    color: #333;
-    font-weight: 600;
-}
-
 .list-nav .active {
     background-color: #e0e0e0;
     font-weight: 600;
     color: #000;
-}
-
-.list-nav .separator {
-    height: 1px;
-    background-color: #eee;
-    margin: 10px 20px;
-    padding: 0;
-}
-
-.sidebar-section-title {
-    padding: 10px 15px;
-    font-size: 12px;
-    font-weight: bold;
-    color: #888;
-    text-transform: uppercase;
 }
 /* -------------------- Contenido Principal -------------------- */
 .main-content {
@@ -159,14 +135,6 @@ body {
 
 .task-input input::placeholder {
     color: #333333; /* Placeholder negro/gris oscuro */
-}
-
-/* Barra inferior */
-.bottom-bar {
-    text-align: center;
-    padding: 15px 0;
-    font-style: italic;
-    opacity: 0.9;
 }
 
 /* Contenedor del título y botón de archivadas */

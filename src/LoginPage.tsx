@@ -19,12 +19,11 @@ const LoginPage: React.FC = () => {
 
     if (isLoginView) {
       // Lógica de Login
-      const userExists = Object.values(users).some(user => user.email === username);
-      const userAccount = users[username] || Object.values(users).find(user => user.email === username);
-      const storedUsername = Object.keys(users).find(key => users[key] === userAccount);
+      const storedUsername = Object.keys(users).find(key => users[key].email === username);
+      const userAccount = storedUsername ? users[storedUsername] : null;
 
-      if (userAccount && userAccount.password === password && storedUsername) {
-        onLogin(storedUsername);
+      if (userAccount && userAccount.password === password) {
+        onLogin(storedUsername!);
         navigate('/hoy'); // Redirige a la página principal
       } else if (!userAccount) {
         alert('Usuario no encontrado. Por favor, regístrese.');
@@ -61,7 +60,7 @@ const LoginPage: React.FC = () => {
         
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-field">
-            <label htmlFor="username">{isLoginView ? 'Ingresa Correo Electrónico o Usuario' : 'Usuario'}</label>
+            <label htmlFor="username">{isLoginView ? 'Correo Electrónico' : 'Usuario'}</label>
             <input 
               type="text" 
               id="username" 
