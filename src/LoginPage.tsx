@@ -6,21 +6,13 @@ interface User {
   email: string;
 }
 
-// Funciones para manejar el almacenamiento de usuarios en localStorage
-const getUsers = (): { [key: string]: User } => {
-  const storedUsers = localStorage.getItem('task-manager-users');
-  return storedUsers ? JSON.parse(storedUsers) : {};
-};
-
-const saveUsers = (users: { [key: string]: User }) => {
-  localStorage.setItem('task-manager-users', JSON.stringify(users));
-};
-
 interface LoginPageProps {
   onLogin: (username: string) => void;
+  getUsers: () => { [key: string]: User };
+  saveUsers: (users: { [key: string]: User }) => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, getUsers, saveUsers }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -40,14 +32,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       if (userAccount && userAccount.password === password && storedUsername) {
         onLogin(storedUsername);
-        navigate('/GestionarMiDia'); // Redirige a la página "Hoy"
+        navigate('/hoy'); // Redirige a la página principal
       } else if (!userAccount) {
         alert('Usuario no encontrado. Por favor, regístrese.');
       } else {
         alert('Contraseña incorrecta.');
       }
     } else {
-      // Lógica de Crear Usuario
+      // Lógica de Creqeu ar Usuario
       if (password !== confirmPassword) {
         alert('Las contraseñas no coinciden.');
         return;

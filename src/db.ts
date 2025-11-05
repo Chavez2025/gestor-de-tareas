@@ -42,3 +42,7 @@ export const updateRecordingName = async (id: number, name: string) => {
     return db.put('recordings', record);
   }
 };
+
+export const deleteRecording = async (id: number): Promise<void> => {
+  return (await dbPromise).delete('recordings', id);
+};

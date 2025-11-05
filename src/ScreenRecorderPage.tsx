@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { addRecording, getAllRecordingsForUser, updateRecordingName } from './db';
+import { addRecording, getAllRecordingsForUser, updateRecordingName, deleteRecording } from './db';
 
 interface Recording {
   id: number;
@@ -113,6 +113,13 @@ const ScreenRecorderPage: React.FC = () => {
     fetchRecordings();
   };
 
+  const handleDeleteRecording = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta grabación?')) {
+      await deleteRecording(id);
+      fetchRecordings();
+    }
+  };
+
   return (
     <main className="main-content">
       <header className="main-header">
@@ -156,8 +163,16 @@ const ScreenRecorderPage: React.FC = () => {
                       {isEditing ? (
                         <button onClick={() => handleSaveName(rec.id)} className="button-primary">Guardar</button>
                       ) : (
-                        <button onClick={() => handleEdit(rec)} className="button-secondary">Editar</button>
+                        <>
+                          <a href={URL.createObjectURL(rec.blob)} target="_blank" rel="noopener noreferrer" className="button-secondary">
+                            Ver Video
+                          </a>
+                          <button onClick={() => handleEdit(rec)} className="button-secondary">Editar</button>
+                        </>
                       )}
+                      <button onClick={() => handleDeleteRecording(rec.id)} className="button-danger">
+                        Eliminar
+                      </button>
                       <a href={URL.createObjectURL(rec.blob)} download={`${rec.name}.webm`} className="button-primary download-btn">
                         Descargar
                       </a>
