@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+import { FontAwesomeIcon, } from '@fortawesome/react-fontawesome';
+import { faBell, faEnvelope, faMobileAlt, faClock } from '@fortawesome/free-solid-svg-icons';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TaskDetailsModal from './TaskDetailsModal';
 import LoginPage from './LoginPage';
+import { Contact } from './ContactsModal';
+import ContactsPage from './ContactsPage';
 import ScreenRecorderPage from './ScreenRecorderPage';
 import './styles.css';
 
@@ -13,23 +17,48 @@ interface Task {
   date: Date | null;
   description: string;
   isImportant: boolean;
+  isCompleted: boolean;
+  reminderType?: 'email' | 'alarm' | 'whatsapp' | null;
+  reminderRecipient?: string | null;
 }
 
+interface User {
+  password: string;
+  email: string;
+}
+
+// --- Funciones para manejar el almacenamiento de usuarios por usuario ---
+const getUsers = (): { [key: string]: User } => {
+  const storedUsers = localStorage.getItem('task-manager-users');
+  return storedUsers ? JSON.parse(storedUsers) : {};
+};
+
+const saveUsers = (users: { [key: string]: User }) => {
+  localStorage.setItem('task-manager-users', JSON.stringify(users));
+};
+
 // Componente de marcador de posición para el contenido principal
-const PlaceholderContent: React.FC<{ title: string; allTasks: Task[]; onSaveTask: (details: any) => void }> = ({ title, allTasks, onSaveTask }) => {
+const PlaceholderContent: React.FC<{ 
+  title: string; 
+  allTasks: Task[]; 
+  onSaveTask: (details: any) => void;
+  onUpdateTask: (updatedTask: Task) => void;
+}> = ({ title, allTasks, onSaveTask, onUpdateTask }) => {
   const [inputValue, setInputValue] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskNameToSave, setTaskNameToSave] = useState('');
+  const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
+  const [selectedTaskForReminder, setSelectedTaskForReminder] = useState<Task | null>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState<string>('');
+  const [openReminderMenuId, setOpenReminderMenuId] = useState<number | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
-  const now = new Date();
-  // Filtra las tareas según la vista actual
-  const displayedTasks = title === "Importante"
-    ? allTasks.filter(task => task.isImportant)
-    : title === "Tareas por vencer"
-    ? allTasks.filter(task => 
-        task.date && task.date > now && (task.date.getTime() - now.getTime()) < 24 * 60 * 60 * 1000
-      )
-    : allTasks;
+  // Primero, filtramos entre activas y archivadas
+  const filteredByCompletion = allTasks.filter(task => showArchived ? task.isCompleted : !task.isCompleted);
+
+  // Filtra las tareas según la vista actual (esta lógica se moverá o adaptará)
+  const displayedTasks = filteredByCompletion;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && inputValue.trim() !== '') {
@@ -44,13 +73,60 @@ const PlaceholderContent: React.FC<{ title: string; allTasks: Task[]; onSaveTask
     setIsModalOpen(false);
   };
 
+  const handleSetReminder = (taskId: number, type: 'email' | 'alarm' | 'whatsapp') => {
+    const taskToUpdate = allTasks.find(t => t.id === taskId);
+    if (!taskToUpdate) return;
+
+    let recipient: string | null = null;
+    if (type === 'email') {
+      const currentUser = localStorage.getItem('currentUser');
+      const users = getUsers();
+      if (currentUser && users[currentUser]) {
+        recipient = users[currentUser].email;
+      }
+    }
+
+    const updatedTask = { ...taskToUpdate, reminderType: type, reminderRecipient: recipient };
+    onUpdateTask(updatedTask);
+    setOpenReminderMenuId(null); // Cierra el menú
+    // Opcional: mostrar una alerta o notificación
+    alert(`Recordatorio por ${type} configurado. ${recipient ? `Se enviará a: ${recipient}` : ''}`);
+  };
+
+  const handleOpenWhatsappModal = (task: Task) => {
+    setSelectedTaskForReminder(task);
+    setWhatsappNumber(task.reminderRecipient || ''); // Pre-rellenar si ya existe un número
+    setIsWhatsappModalOpen(true);
+    setOpenReminderMenuId(null); // Cerrar el menú de recordatorios
+  };
+
+  const handleSaveWhatsappReminder = () => {
+    if (selectedTaskForReminder && whatsappNumber) {
+      const updatedTask = { ...selectedTaskForReminder, reminderType: 'whatsapp' as const, reminderRecipient: whatsappNumber };
+      onUpdateTask(updatedTask);
+      setIsWhatsappModalOpen(false);
+    }
+  };
+
+  const handleTaskClick = (taskId: number) => {
+    setExpandedTaskId(prevId => (prevId === taskId ? null : taskId));
+  };
+
+  const handleToggleComplete = (taskId: number) => {
+    const taskToUpdate = allTasks.find(t => t.id === taskId);
+    if (taskToUpdate) {
+      const updatedTask = { ...taskToUpdate, isCompleted: !taskToUpdate.isCompleted };
+      onUpdateTask(updatedTask);
+    }
+  };
+
   return (
     <main className="main-content">
       <header className="main-header">
         <h1>{title}</h1>
       </header>
       {/* Solo mostramos el campo de agregar tarea en la página "Mi día" */}
-      {title === "Programa tu dia, programa tu vida." && (
+      {title === "Comienza a organizarte..." && (
         <div className="task-input-section">
           <input 
             type="text" 
@@ -62,18 +138,80 @@ const PlaceholderContent: React.FC<{ title: string; allTasks: Task[]; onSaveTask
           />
         </div>
       )}
+      <div className="task-list-header">
+        <h2 className="task-list-title">
+          {showArchived ? 'Tareas Archivadas' : 'Lista de tareas'}
+        </h2>
+        <button onClick={() => setShowArchived(!showArchived)} className="button-as-title">
+          {showArchived ? 'Atras' : 'Ver Archivadas'}
+        </button>
+      </div>
       <ul className="task-list">
         {displayedTasks.map(task => {
           const isOverdue = task.date && task.date < new Date();
           return (
-            <li key={task.id} className={isOverdue ? 'task-overdue' : ''}>
-              <div className="task-name">
-                {task.name}
-                {task.isImportant && <span className="important-star"> &#9733;</span>}
+            <li 
+              key={task.id} 
+              className={`${isOverdue ? 'task-overdue' : ''} ${expandedTaskId === task.id ? 'expanded' : ''} ${task.isCompleted ? 'completed' : ''}`}
+              onClick={() => handleTaskClick(task.id)}
+            >
+              <div className="reminder-container">
+                <button 
+                  className="reminder-icon-btn" 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Evita que el clic se propague al <li> y expanda la tarea
+                    setOpenReminderMenuId(openReminderMenuId === task.id ? null : task.id);
+                  }}
+                  title="Selecciona modo de recordatorio">
+                  <FontAwesomeIcon icon={faBell} />
+                </button>
+                {task.reminderType === 'email' && <FontAwesomeIcon icon={faEnvelope} className="reminder-type-icon" title={`Email a: ${task.reminderRecipient}`} />}
+                {task.reminderType === 'alarm' && <FontAwesomeIcon icon={faClock} className="reminder-type-icon" title="Recordatorio por alarma" />}
+                {task.reminderType === 'whatsapp' && <FontAwesomeIcon icon={faMobileAlt} className="reminder-type-icon" title="Recordatorio por WhatsApp" />}
+
+                {openReminderMenuId === task.id && (
+                  <div className="reminder-menu">
+                    <div className="reminder-menu-header">Tipo de recordatorio</div>
+                    <ul>
+                      <li onClick={() => {
+                        handleSetReminder(task.id, 'email');
+                      }}>
+                        <FontAwesomeIcon icon={faEnvelope} /> Correo electrónico
+                      </li>
+                      <li onClick={() => {
+                        handleSetReminder(task.id, 'alarm');
+                      }}>
+                        <FontAwesomeIcon icon={faClock} /> Alarma
+                      </li>
+                      <li onClick={() => handleOpenWhatsappModal(task)}>
+                        <FontAwesomeIcon icon={faMobileAlt} /> WhatsApp
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
-              {isOverdue && <div className="task-status-label overdue-label">Vencida</div>}
-              {task.date && <div className="task-details">Vence: {task.date.toLocaleString()}</div>}
-              {task.description && <div className="task-details">{task.description}</div>}
+
+              <div className="task-content">
+                <div className="task-name">{task.name}</div>
+                {isOverdue && <div className="task-status-label overdue-label">Vencida</div>}
+                {task.date && <div className="task-details">Vence: {task.date.toLocaleString()}</div>}
+                {expandedTaskId === task.id && task.description && (
+                  <div className="task-details task-description">{task.description}</div>
+                )}
+              </div>
+              <div className="task-actions">
+                {task.isImportant && <span className="important-star"> &#9733;</span>}
+                <div className="task-completion-action" onClick={(e) => e.stopPropagation()}>
+                  <input 
+                    type="checkbox" 
+                    id={`task-check-${task.id}`}
+                    className="task-checkbox"
+                    checked={task.isCompleted}
+                    onChange={() => handleToggleComplete(task.id)}
+                  />
+                  <label htmlFor={`task-check-${task.id}`}>Hecha</label>
+                </div>
+              </div>
             </li>
           );
         })}
@@ -88,6 +226,29 @@ const PlaceholderContent: React.FC<{ title: string; allTasks: Task[]; onSaveTask
           }}
           onSave={handleSaveAndClose}
         />
+      )}
+
+      {isWhatsappModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Recordatorio por WhatsApp</h2>
+            <div className="modal-field">
+              <label htmlFor="whatsapp-input">Número de Teléfono:</label>
+              <input
+                type="tel"
+                id="whatsapp-input"
+                className="whatsapp-input"
+                value={whatsappNumber}
+                onChange={(e) => setWhatsappNumber(e.target.value)}
+                placeholder="Ej: +14155552671"
+              />
+            </div>
+            <div className="modal-actions">
+              <button onClick={handleSaveWhatsappReminder} className="button-primary">Registrar Número</button>
+              <button onClick={() => setIsWhatsappModalOpen(false)} className="button-secondary">Cancelar</button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
@@ -113,26 +274,58 @@ const saveTasksForUser = (username: string, tasks: Task[]) => {
   localStorage.setItem(`tasks-for-user-${username}`, JSON.stringify(tasks));
 };
 
+// --- Funciones para manejar el almacenamiento de contactos por usuario ---
+const getContactsForUser = (username: string): Contact[] => {
+  if (!username) return [];
+  const storedContacts = localStorage.getItem(`contacts-for-user-${username}`);
+  return storedContacts ? JSON.parse(storedContacts) : [];
+};
+
+const saveContactsForUser = (username: string, contacts: Contact[]) => {
+  if (!username) return;
+  localStorage.setItem(`contacts-for-user-${username}`, JSON.stringify(contacts));
+};
+
 const App = () => {
   // Lee del localStorage para ver si ya hay una sesión activa
-  const [currentUser, setCurrentUser] = useState<string | null>(() => localStorage.getItem('currentUser'));
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>(() => currentUser ? getTasksForUser(currentUser) : []);
+  const [contacts, setContacts] = useState<Contact[]>(() => currentUser ? getContactsForUser(currentUser) : []);
 
   const isAuthenticated = !!currentUser;
 
   // Cargar y guardar tareas cuando el usuario o las tareas cambien
   useEffect(() => {
-    if (currentUser) {
-      setTasks(getTasksForUser(currentUser));
-    } else {
-      setTasks([]); // Limpiar tareas si no hay usuario
-    }
+    setContacts(currentUser ? getContactsForUser(currentUser) : []);
   }, [currentUser]);
 
-  const handleSaveTask = (taskDetails: { name: string; date: Date | null; description: string; isImportant: boolean }) => {
+  const handleAddContact = (contactDetails: Omit<Contact, 'id'>) => {
+    const newContact: Contact = {
+      id: Date.now(),
+      ...contactDetails,
+    };
+    const updatedContacts = [...contacts, newContact];
+    setContacts(updatedContacts);
+    if (currentUser) {
+      saveContactsForUser(currentUser, updatedContacts);
+    }
+  };
+
+  const handleDeleteContact = (contactId: number) => {
+    const updatedContacts = contacts.filter(c => c.id !== contactId);
+    setContacts(updatedContacts);
+    if (currentUser) {
+      saveContactsForUser(currentUser, updatedContacts);
+    }
+  };
+
+  const handleSaveTask = (taskDetails: { name: string; date: Date | null; description: string; isImportant: boolean; tags: string[] }) => {
     const newTask: Task = {
       id: Date.now(),
       ...taskDetails,
+      // Limpiar y filtrar tags vacíos
+      tags: taskDetails.tags.map(t => t.trim()).filter(t => t),
+      isCompleted: false, // Las nuevas tareas no están completadas por defecto
     };
     const updatedTasks = [...tasks, newTask];
     setTasks(updatedTasks);
@@ -141,9 +334,25 @@ const App = () => {
     }
   };
 
+  const handleUpdateTask = (updatedTask: Task) => {
+    const updatedTasks = tasks.map(task => 
+      task.id === updatedTask.id ? {
+        ...updatedTask,
+        tags: updatedTask.tags?.map(t => t.trim()).filter(t => t) || []
+      } : task
+    );
+    setTasks(updatedTasks);
+    if (currentUser) {
+      saveTasksForUser(currentUser, updatedTasks);
+    }
+  };
+
   const handleLogin = (username: string) => {
+    // Guardar el usuario actual en localStorage y en el estado
     localStorage.setItem('currentUser', username);
     setCurrentUser(username);
+    // Cargar las tareas para el usuario que acaba de iniciar sesión
+    setTasks(getTasksForUser(username));
   };
 
   const handleLogout = () => {
@@ -158,19 +367,19 @@ const App = () => {
         <Routes>
           {isAuthenticated ? (
             <>
-              <Route path="/GestionarMiDia" element={<PlaceholderContent title="Programa tu dia, programa tu vida." allTasks={tasks} onSaveTask={handleSaveTask} />} />
-              <Route path="/important" element={<PlaceholderContent title="Importante" allTasks={tasks} onSaveTask={handleSaveTask} />} />
-              <Route path="/assigned" element={<PlaceholderContent title="Asignadas a mí" allTasks={tasks} onSaveTask={handleSaveTask} />} />
-              <Route path="/tasks" element={<PlaceholderContent title="Tareas por vencer" allTasks={tasks} onSaveTask={handleSaveTask} />} />
+              <Route path="/hoy" element={<PlaceholderContent title="Comienza a organizarte..." allTasks={tasks} onSaveTask={handleSaveTask} onUpdateTask={handleUpdateTask} />} />
+              <Route path="/important" element={<PlaceholderContent title="Importante" allTasks={tasks} onSaveTask={handleSaveTask} onUpdateTask={handleUpdateTask} />} />
+              <Route path="/contacts" element={<ContactsPage contacts={contacts} onAddContact={handleAddContact} onDeleteContact={handleDeleteContact} />} />
+              <Route path="/tasks" element={<PlaceholderContent title="Tareas por vencer" allTasks={tasks} onSaveTask={handleSaveTask} onUpdateTask={handleUpdateTask} />} />
               <Route path="/screen-recorder" element={<ScreenRecorderPage />} />
               {/* Si un usuario autenticado va a /login, lo redirigimos */}
-              <Route path="/login" element={<Navigate to="/GestionarMiDia" replace />} />
-              <Route path="/" element={<Navigate to="/GestionarMiDia" replace />} />
-              <Route path="*" element={<Navigate to="/GestionarMiDia" replace />} />
+              <Route path="/login" element={<Navigate to="/hoy" replace />} />
+              <Route path="/" element={<Navigate to="/hoy" replace />} />
+              <Route path="*" element={<Navigate to="/hoy" replace />} />
             </>
           ) : (
             <>
-              <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+              <Route path="/login" element={<LoginPage onLogin={handleLogin} getUsers={getUsers} saveUsers={saveUsers} />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </>
           )}

@@ -7,7 +7,11 @@
 }
 
 body {
-    background-color: #f5f5f5; /* Fondo claro */
+    /* Imagen de fondo para decorar */
+    background-image: url('https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=1935&auto=format&fit=crop');
+    background-size: cover; /* Cubrir todo el espacio */
+    background-position: center; /* Centrar la imagen */
+    background-attachment: fixed; /* El fondo no se mueve con el scroll */
     color: #333;
 }
 
@@ -32,7 +36,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    height: 60px;
+    height: 80px; /* Aumentado para hacer la barra más alta */
 }
 
 .sidebar-header h2 {
@@ -50,24 +54,28 @@ body {
 }
 
 .list-nav li a {
-    font-size: 14px;
+    font-size: 16px; /* Aumentado el tamaño de la fuente */
     color: #444;
 }
 
 .list-nav li a {
     text-decoration: none;
-    color: inherit;
     display: flex;
-    align-items: center;
+    flex-direction: column; /* Apilar icono y texto verticalmente */
+    align-items: center; /* Centrar horizontalmente */
+    justify-content: center; /* Centrar verticalmente */
     width: 100%;
     height: 100%;
     padding: 10px 15px;
+    gap: 4px; /* Espacio entre el icono y el texto */
 }
 
 .user-greeting {
-    padding: 10px 15px;
-    font-size: 14px;
-    color: #555;
+    /* Estilos para centrar el saludo y hacerlo más grande */
+    flex-grow: 1;
+    text-align: center;
+    font-size: 22px; /* Más grande */
+    color: #333;
     font-weight: 600;
 }
 
@@ -84,6 +92,13 @@ body {
     padding: 0;
 }
 
+.sidebar-section-title {
+    padding: 10px 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #888;
+    text-transform: uppercase;
+}
 /* -------------------- Contenido Principal -------------------- */
 .main-content {
     flex-grow: 1;
@@ -109,7 +124,6 @@ body {
 /* Sección de entrada de Tareas */
 .task-input-section {
     margin-top: 30px;
-    flex-grow: 1; /* Permite que esta sección ocupe el espacio principal */
 }
 
 .task-input {
@@ -151,14 +165,43 @@ body {
     opacity: 0.9;
 }
 
+/* Contenedor del título y botón de archivadas */
+.task-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #3a3a3a;
+    padding-bottom: 10px;
+}
+
+.task-list-title {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 600;
+    text-transform: none; /* Quitar mayúsculas */
+    letter-spacing: 0.5px;
+    border-bottom: none; /* Quitar borde inferior */
+}
+
+/* Estilo para que el botón "Ver Archivadas" se vea como el título */
+.button-as-title {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+}
+
 /* -------------------- Lista de Tareas -------------------- */
 .task-list {
     list-style: none;
-    margin-top: 20px;
     padding: 0;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%; /* Ocupar todo el ancho */
 }
 
 .task-list li {
@@ -166,8 +209,151 @@ body {
     padding: 15px;
     border-radius: 4px;
     margin-bottom: 10px;
+    display: flex;
+    align-items: center; /* Centrar verticalmente */
+    gap: 15px; /* Espacio entre icono y texto */
     font-size: 17px;
     border-left: 3px solid #0078d4;
+    cursor: pointer; /* Indicar que la tarea es clickeable */
+    position: relative; /* Necesario para posicionar el tooltip */
+}
+
+.task-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #0078d4; /* Color del check */
+}
+
+/* Estilos para el grupo de checkbox + label "Hecha" */
+.task-completion-action {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Aumentado el espacio entre el check y el texto */
+    cursor: pointer;
+}
+
+/* Nuevo tooltip específico para el área del checkbox */
+.task-completion-action::after {
+    content: 'Clic para archivar';
+    position: absolute;
+    bottom: 100%; /* Posicionar encima del elemento */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #252526;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 11;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+    margin-bottom: 5px; /* Espacio entre el elemento y el tooltip */
+}
+
+/* Estilos para tareas completadas */
+.task-list li.completed .task-name {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+.task-list li.completed,
+.task-list li.completed .task-completion-action label {
+    opacity: 0.7;
+}
+
+/* Tooltip que aparece al pasar el cursor */
+.task-list li::after {
+    content: 'Clic para ver descripción';
+    position: absolute;
+    top: -45px; /* Aumentado para dar más espacio */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #252526; /* Fondo oscuro, similar al de los modales */
+    color: #fff;
+    padding: 8px 15px; /* Aumentado el padding */
+    border-radius: 4px;
+    font-size: 16px; /* Aumentado el tamaño de la fuente */
+    white-space: nowrap; /* Evitar que el texto se parta en dos líneas */
+    z-index: 10;
+    opacity: 0; /* Oculto por defecto */
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none; /* Para que no interfiera con el clic */
+}
+
+.reminder-container {
+    position: relative; /* Para posicionar el menú */
+}
+
+.reminder-icon-btn {
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px;
+}
+
+.reminder-icon-btn:hover {
+    color: #ffffff;
+}
+
+.reminder-type-icon {
+    font-size: 14px;
+    color: #00aaff; /* Un azul claro para destacar */
+    margin-left: -10px; /* Acercar al icono principal */
+}
+
+.reminder-menu {
+    position: absolute;
+    bottom: 100%; /* Posicionar arriba del icono */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 6px;
+    z-index: 10;
+    width: 220px;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.reminder-menu-header {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #ccc;
+}
+
+.reminder-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reminder-menu li {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 4px;
+}
+
+.reminder-menu li:hover {
+    background-color: #555;
+}
+
+.task-content {
+    flex-grow: 1; /* Ocupa el espacio disponible */
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Previene desbordamiento de texto */
 }
 
 .task-name {
@@ -184,6 +370,35 @@ body {
     font-size: 14px;
     opacity: 0.8;
     margin-top: 5px;
+    word-break: break-all;
+}
+
+/* Mostrar el tooltip al pasar el cursor sobre la tarea */
+.task-list li:hover::after,
+.task-completion-action:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Ocultar el tooltip general cuando se muestra el específico del checkbox */
+.task-list li:hover .task-completion-action:hover::after {
+    opacity: 1; /* Asegurarse de que el tooltip del check es visible */
+}
+.task-list li:hover .task-actions:hover::after {
+    opacity: 0; /* Ocultar el tooltip general */
+}
+.task-description {
+    margin-top: 10px; /* Espacio extra para la descripción cuando aparece */
+}
+
+.task-actions {
+    margin-left: auto; /* Empuja las acciones a la derecha */
+    padding-left: 15px;
+    display: flex;
+    align-items: center; /* Alinear verticalmente */
+    justify-content: flex-end; /* Alinear contenido a la derecha */
+    gap: 20px; /* Aumentado el espacio entre la estrella y el check */
+    position: relative; /* Necesario para el tooltip del checkbox */
 }
 
 .task-list li.task-overdue {
@@ -194,16 +409,16 @@ body {
 .task-status-label {
     font-size: 12px;
     font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 10px;
-    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    display: inline-block; /* Mantiene el comportamiento de bloque en línea */
     margin-top: 8px;
     margin-bottom: 3px;
 }
 
 .overdue-label {
-    background-color: #e74c3c;
-    color: #fff;
+    background-color: transparent; /* Eliminamos el fondo sólido */
+    color: #e74c3c; /* Hacemos que el texto sea rojo */
 }
 
 
@@ -294,6 +509,20 @@ body {
 
 .button-secondary {
     background-color: #555;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.whatsapp-input {
+    width: 100%;
+    padding: 10px;
+}
+
+.button-danger {
+    background-color: #e74c3c; /* Rojo */
     color: white;
     border: none;
     padding: 10px 20px;
@@ -409,11 +638,15 @@ body {
 .recording-info {
     display: flex;
     flex-direction: column; /* Apilar nombre y fecha */
+    /* Solución al desbordamiento: permite que el contenedor se encoja */
+    min-width: 0;
 }
 
 .recording-name {
     font-weight: 600;
     font-size: 18px;
+    /* Solución al desbordamiento: rompe palabras largas */
+    word-break: break-all;
 }
 
 .edit-name-input {
@@ -434,4 +667,77 @@ body {
 .recording-actions {
     display: flex;
     gap: 10px;
+}
+
+/* Estilos para el Modal de Contactos */
+.contacts-container {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.contact-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contact-list-view {
+    flex: 1.5;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px; /* Para la barra de scroll */
+}
+
+.contact-list {
+    list-style: none;
+    padding: 0;
+}
+
+.contact-item {
+    background-color: #3a3a3a;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.contact-item:hover {
+    background-color: #4a4a4a;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contact-details-expanded {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.tag-pill {
+    background-color: #005a9e;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
 }

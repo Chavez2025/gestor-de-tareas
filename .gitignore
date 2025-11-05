@@ -1,0 +1,30 @@
+# Ignorar dependencias de Node.js
+/node_modules
+
+# Ignorar archivos de logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Ignorar carpeta de build/distribución
+/dist
+
+# Archivos de caché de TypeScript
+.tsbuildinfo
+
+# Archivos de entorno local (contienen secretos y configuraciones locales)
+.env
+.env.local
+.env.*.local
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de editores de código
+.vscode/
+.idea/
+
+# Reportes de cobertura de tests
+/coverage
