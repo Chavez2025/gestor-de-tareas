@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Primero, importamos las herramientas que vamos a necesitar de React.
 import React, { useState, useRef, useEffect } from 'react';
 // También traemos las funciones que hicimos para hablar con la base de datos del navegador (IndexedDB).
@@ -41,10 +42,40 @@ const ScreenRecorderPage: React.FC = () => {
   };
 
   // Esto se ejecuta solo una vez, cuando el componente se carga por primera vez.
+=======
+import React, { useState, useRef, useEffect } from 'react';
+import { addRecording, getAllRecordingsForUser, updateRecordingName, deleteRecording } from './db';
+
+interface Recording {
+  id: number;
+  name: string;
+  blob: Blob;
+  date: string;
+  user: string;
+}
+
+const ScreenRecorderPage: React.FC = () => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const currentUser = localStorage.getItem('currentUser');
+
+  const fetchRecordings = async () => {
+    if (!currentUser) return;
+    const allRecordings = await getAllRecordingsForUser(currentUser);
+    setRecordings(allRecordings.reverse()); // Mostrar las más nuevas primero
+  };
+
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
   useEffect(() => {
     fetchRecordings();
   }, [currentUser]);
 
+<<<<<<< HEAD
   // La función principal que se ejecuta cuando el usuario le da a "Iniciar Grabación".
   const handleStartRecording = async () => {
     // Primero, le preguntamos al usuario qué nombre le quiere poner al video.
@@ -62,11 +93,29 @@ const ScreenRecorderPage: React.FC = () => {
       });
 
       // Paso 2: Ahora pedimos permiso para usar el micrófono.
+=======
+  const handleStartRecording = async () => {
+    const videoName = prompt("Ingrese un nombre para el video:", `Grabacion-${new Date().toLocaleDateString()}`);
+    if (!videoName || !currentUser) return;
+
+    try {
+      // Solicitar permiso para grabar pantalla y audio del sistema/pestaña
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { cursor: 'always' },
+        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 }
+      });
+
+      // Solicitar permiso para grabar audio del micrófono
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
       const audioStream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true }
       });
 
+<<<<<<< HEAD
       // Paso 3: Juntamos el video de la pantalla y el audio del micrófono en un solo "stream".
+=======
+      // Combinar las pistas de video y audio en un solo stream
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
       const combinedStream = new MediaStream([
         ...displayStream.getVideoTracks(),
         ...audioStream.getAudioTracks()
@@ -74,6 +123,7 @@ const ScreenRecorderPage: React.FC = () => {
       
       mediaStreamRef.current = combinedStream;
 
+<<<<<<< HEAD
       // Paso 4: Creamos el objeto MediaRecorder, que es el que realmente hace la grabación.
       const options = { mimeType: 'video/webm; codecs=vp9,opus' };
       let recorder;
@@ -134,12 +184,65 @@ const ScreenRecorderPage: React.FC = () => {
   };
 
   // Cuando el usuario le da al botón de "Editar".
+=======
+      // Detener la grabación si el usuario cierra la ventana de compartir
+      displayStream.getVideoTracks()[0].addEventListener('ended', handleStopRecording);
+
+      const recorder = new MediaRecorder(combinedStream, {
+        mimeType: 'video/webm; codecs=vp9,opus' // Formato de buena calidad y compatibilidad
+      });
+
+      mediaRecorderRef.current = recorder;
+      recordedChunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        
+        const newRecording = {
+          name: videoName,
+          blob: videoBlob,
+          date: new Date().toISOString(),
+          user: currentUser,
+        };
+
+        addRecording(newRecording).then(fetchRecordings);
+      };
+
+      recorder.start();
+      setIsRecording(true);
+
+    } catch (error) {
+      console.error("Error al iniciar la grabación:", error);
+      alert("No se pudo iniciar la grabación. Asegúrate de dar los permisos necesarios.");
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+    setIsRecording(false);
+  };
+
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
   const handleEdit = (rec: Recording) => {
     setEditingId(rec.id);
     setEditingName(rec.name);
   };
 
+<<<<<<< HEAD
   // Cuando el usuario guarda el nuevo nombre del video.
+=======
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
   const handleSaveName = async (id: number) => {
     await updateRecordingName(id, editingName);
     setEditingId(null);
@@ -147,16 +250,23 @@ const ScreenRecorderPage: React.FC = () => {
     fetchRecordings();
   };
 
+<<<<<<< HEAD
   // Para borrar una grabación.
   const handleDeleteRecording = async (id: number) => {
     // Siempre es bueno preguntar antes de borrar algo permanentemente.
+=======
+  const handleDeleteRecording = async (id: number) => {
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
     if (window.confirm('¿Estás seguro de que quieres eliminar esta grabación?')) {
       await deleteRecording(id);
       fetchRecordings();
     }
   };
 
+<<<<<<< HEAD
   // --- RENDERIZADO DEL COMPONENTE (Lo que se ve en pantalla) ---
+=======
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
   return (
     <main className="main-content">
       <header className="main-header">
@@ -164,7 +274,10 @@ const ScreenRecorderPage: React.FC = () => {
       </header>
       <div className="recorder-container">
         <div className="recorder-actions">
+<<<<<<< HEAD
           {/* Aquí decidimos qué botón mostrar: "Iniciar" o "Detener" */}
+=======
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
           {!isRecording ? (
             <button onClick={handleStartRecording} className="button-primary record-btn">
               Iniciar Grabación
@@ -178,7 +291,10 @@ const ScreenRecorderPage: React.FC = () => {
 
         <div className="recordings-list-container">
           <h2>Mis Videos</h2>
+<<<<<<< HEAD
           {/* Si hay videos, los mostramos en una lista. Si no, un mensaje. */}
+=======
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
           {recordings.length > 0 ? (
             <ul className="recordings-list">
               {recordings.map((rec) => {
@@ -186,7 +302,10 @@ const ScreenRecorderPage: React.FC = () => {
                 return (
                   <li key={rec.id} className="recording-item">
                     <div className="recording-info">
+<<<<<<< HEAD
                       {/* Si estamos editando, mostramos un campo de texto. Si no, el nombre normal. */}
+=======
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
                       {isEditing ? (
                         <input 
                           type="text" 
@@ -200,7 +319,10 @@ const ScreenRecorderPage: React.FC = () => {
                       <span className="recording-date">{new Date(rec.date).toLocaleString()}</span>
                     </div>
                     <div className="recording-actions">
+<<<<<<< HEAD
                       {/* Lo mismo para los botones: "Guardar" o el resto de acciones. */}
+=======
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
                       {isEditing ? (
                         <button onClick={() => handleSaveName(rec.id)} className="button-primary">Guardar</button>
                       ) : (
@@ -214,7 +336,10 @@ const ScreenRecorderPage: React.FC = () => {
                       <button onClick={() => handleDeleteRecording(rec.id)} className="button-danger">
                         Eliminar
                       </button>
+<<<<<<< HEAD
                       {/* Este enlace permite descargar el video directamente. */}
+=======
+>>>>>>> 47cc9191a79f56aabb3194e7d1b84a1f97ed3d98
                       <a href={URL.createObjectURL(rec.blob)} download={`${rec.name}.webm`} className="button-primary download-btn">
                         Descargar
                       </a>
