@@ -40,8 +40,10 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ taskName, onClose, 
           <DatePicker 
             selected={date} 
             onChange={(d: Date | null) => setDate(d)}
+            showTimeSelect
             className="date-picker-input"
-            placeholderText="Selecciona una fecha"
+            placeholderText="Selecciona fecha y hora"
+            dateFormat="dd/MM/yyyy h:mm aa"
             isClearable
           />
         </div>

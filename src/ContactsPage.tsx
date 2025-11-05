@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Contact } from './ContactsModal';
 import ContactsModal from './ContactsModal';
+import { useAppStore } from './store';
 
-interface ContactsPageProps {
-  contacts: Contact[];
-  onAddContact: (contact: Omit<Contact, 'id'>) => void;
-  onDeleteContact: (contactId: number) => void;
-}
-
-const ContactsPage: React.FC<ContactsPageProps> = ({ contacts, onAddContact, onDeleteContact }) => {
+const ContactsPage: React.FC = () => {
+  const contacts = useAppStore((state) => state.contacts);
+  const onAddContact = useAppStore((state) => state.addContact);
+  const onDeleteContact = useAppStore((state) => state.deleteContact);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedContactId, setExpandedContactId] = useState<number | null>(null);
 
